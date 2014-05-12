@@ -12,8 +12,25 @@ Dir[Rails.root.join("spec/support/**/*.rb")].each { |f| require f }
 # If you are not using ActiveRecord, you can remove this line.
 ActiveRecord::Migration.check_pending! if defined?(ActiveRecord::Migration)
 
+Capybara.register_driver :quiet_webkit do |app|
+  Capybara::Webkit::Driver.new(app, stderr: QTBugWorkAroundOutputter.new)
+end
+
+class QTBugWorkAroundOutputter
+  IGNOREABLE = /CoreText performance/
+
+  def write(message)
+    if message =~ IGNOREABLE
+      0
+    else
+      puts(message)
+      1
+    end
+  end
+end
+
 RSpec.configure do |config|
-  Capybara.javascript_driver = :webkit
+  Capybara.javascript_driver = :quiet_webkit
 
   # If true, the base class of anonymous controllers will be inferred
   # automatically. This will be the default behavior in future versions of
